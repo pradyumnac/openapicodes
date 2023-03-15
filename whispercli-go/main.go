@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -23,16 +25,18 @@ func main() {
 	}
 	defer file.Close()
 
+	_ = godotenv.Load(".env")
+	apiKey := os.Getenv("WHISPER_API_KEY")
+
 	// Create HTTP client
 	client := &http.Client{}
 
 	// Build API endpoint URL
-	apiEndpoint := "https://whisper.ai/api/transcribe"
+	apiEndpoint := "https://api.openai.com/v1/audio/transcriptions"
 	formData := url.Values{}
-	formData.Add("apikey", "your_api_key_here")
-	formData.Add("model", "default")
+	formData.Add("model", "whisper-1")
 	formData.Add("format", "txt")
-	formData.Add("content-type", "audio/mpeg")
+	// formData.Add("content-type", "audio/mpeg")
 
 	// Build HTTP request
 	req, err := http.NewRequest("POST", apiEndpoint, file)
@@ -40,8 +44,9 @@ func main() {
 		fmt.Println("Error creating request:", err)
 		return
 	}
-	req.Header.Set("Content-Type", "audio/mpeg")
+	req.Header.Set("Content-Type", "multipart/form-data")
 	req.Header.Set("User-Agent", "Whisper-CLI/1.0")
+	req.Header.Set("Authorization", "Bearer"+apiKey)
 	req.PostForm = formData
 
 	// Send HTTP request
